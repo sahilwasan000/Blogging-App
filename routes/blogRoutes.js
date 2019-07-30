@@ -14,28 +14,10 @@ module.exports = app => {
   });
 
   app.get('/api/blogs', requireLogin, async (req, res) => {
-    const redis  = require('redis');
-    const redisUrl = 'redis://127.0.0.1:6379';
-    const client =redis.createClient(redisUrl);
-    const util = require('util');
-    client.get = util.promisify(client.get);
+    const blogs = await Blog.find({_user : req.user.id});
 
-    //check if any blogs exists in cache.
-    const cachedBlogs = await client.get(req.user.id);
-
-    //if yes
-    if(cachedBlogs){
-      console.log('LOADED FROM CACHE MEMORY');
-      return res.send(JSON.parse(cachedBlogs));
-    }
-
-    //if no, first send then update
-    const blogs = await Blog.find({ _user: req.user.id });
-    console.log('LOADED FROM MONGODB');
-    res.send(blogs);
-
-    client.set(req.user.id, JSON.stringify(blogs));
-  });
+    res.send(blogs); 
+    });
 
   app.post('/api/blogs', requireLogin, async (req, res) => {
     const { title, content } = req.body;
